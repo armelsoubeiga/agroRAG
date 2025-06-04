@@ -1,6 +1,6 @@
 ﻿
 <div align="center">
-  <p style="font-size:100px">🌾</p>
+  <img src="https://emojicdn.elk.sh/🌾?style=google" width="120" height="120"/>
 </div>
 
 # AgroRAG 🌾
