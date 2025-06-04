@@ -1,0 +1,42 @@
+name: Weekly Crawler Execution
+
+on:
+  schedule:
+    # Exécution chaque lundi à 3h00 du matin (UTC)
+    - cron: '0 3 * * 1'
+  # Permet aussi un déclenchement manuel pour les tests
+  workflow_dispatch:
+
+jobs:
+  run-crawler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v3
+        
+      - name: Configuration de Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Installation des dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 pyyaml
+          
+      - name: Exécution du crawler
+        run: |
+          python crawler/agro_crawler.py
+          
+      - name: Commit des nouveaux documents indexés
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/indexed_documents.yaml
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update indexed documents (weekly crawler execution)"
+          
+      - name: Push des modifications
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}

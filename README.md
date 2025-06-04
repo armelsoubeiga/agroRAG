@@ -6,11 +6,11 @@
 
 # AgroRAG
 
-AgroRAG est une application d'intelligence artificielle basée sur le principe de Retrieval-Augmented Generation (RAG). Elle vise à fournir des réponses contextualisées à des questions agricoles en s'appuyant sur une base documentaire locale au Burkina Faso.
+AgroRAG est une application d'intelligence artificielle basée sur le principe de Retrieval-Augmented Generation (RAG). Elle vise à fournir des réponses contextualisées à des questions agricoles en s'appuyant sur une base documentaire locale adaptée au saison, sols, spéculations, etc au Burkina Faso.
 
 ## 🚀 Objectifs
 
-- Faciliter l'accès à l'information agricole pour les agriculteurs, étudiants, chercheurs et décideurs
+- Faciliter l'accès à l'information agricole pour les agriculteurs et agripreneurs
 - Exploiter des documents locaux (rapports, guides techniques, PDF, etc.) pour répondre précisément aux questions
 - Déployer un agent IA accessible en ligne via Hugging Face Spaces
 
@@ -56,9 +56,12 @@ agroRAG/
 │   ├── loader.py      # Chargement des documents
 │   ├── rag_pipeline.py # Pipeline RAG complet
 │   └── retriever.py   # Module de récupération de documents
-├── data/              # Données et documents
-│   └── documents/     # Documents sources (PDF, DOCX, etc.)
-├── notebooks/         # Jupyter notebooks pour l'exploration
+├── crawler/           # Crée ce dossier pour le crawler
+│   └── agro_crawler.py         # Script de crawling principal
+├── data/                       # Données et documents
+│   ├── documents/              # Documents sources (PDF, DOCX, etc.)
+│   └── indexed_documents.yaml  # Index des documents trouvés automatiquement
+├── notebooks/                  # Jupyter notebooks pour l'exploration
 │   ├── exploration.ipynb
 │   └── genProjet.ipynb
 ├── utils/             # Utilitaires divers
