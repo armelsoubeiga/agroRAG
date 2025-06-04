@@ -1,0 +1,1 @@
+# Variables globales et config

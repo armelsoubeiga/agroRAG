@@ -1,0 +1,1 @@
+# Logique RAG : retrieval + génération

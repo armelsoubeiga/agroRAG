@@ -1,0 +1,28 @@
+# AgroRAG 🌾
+
+AgroRAG est une application d'intelligence artificielle basée sur le principe de Retrieval-Augmented Generation (RAG). Elle vise à fournir des réponses contextualisées à des questions agricoles en s'appuyant sur une base documentaire locale au Burkina Faso.
+
+## 🚀 Objectifs
+- Faciliter l’accès à l’information agricole pour les agriculteurs, étudiants, décideurs.
+- Utiliser des documents locaux (rapports, guides techniques, PDF, etc.) pour répondre aux questions.
+- Déployer un agent IA consultable en ligne via Hugging Face Spaces.
+
+## 🏗️ Architecture du Projet
+
+```mermaid
+graph LR
+    subgraph Frontend
+        A[Streamlit UI] --> B[main.py]
+    end
+
+    subgraph Backend
+        B --> C[Retriever (FAISS / Elasticsearch)]
+        C --> D[Documents (PDF, DOCX, etc.)]
+        B --> E[LLM (Open Source via HuggingFace)]
+        E --> F[Réponse augmentée]
+    end
+
+    subgraph Déploiement
+        G[GitHub] --> H[CI/CD]
+        H --> I[Hugging Face Space]
+    end
