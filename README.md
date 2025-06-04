@@ -1,9 +1,10 @@
 ﻿
 <div align="center">
-  <img src="https://emojicdn.elk.sh/🌾?style=google" width="120" height="120"/>
+  <!-- <img src="https://emojicdn.elk.sh/🌾?style=google" width="120" height="120"/> -->
+  <img src="docs/logo.svg" width="120" height="120"/>
 </div>
 
-# AgroRAG 🌾
+# AgroRAG
 
 AgroRAG est une application d'intelligence artificielle basée sur le principe de Retrieval-Augmented Generation (RAG). Elle vise à fournir des réponses contextualisées à des questions agricoles en s'appuyant sur une base documentaire locale au Burkina Faso.
 
