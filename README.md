@@ -22,9 +22,9 @@ graph LR
     end
 
     subgraph Backend
-        B --> C[Retriever (FAISS / Elasticsearch)]
-        C --> D[Documents (PDF, DOCX, etc.)]
-        B --> E[LLM (Open Source via HuggingFace)]
+        B --> C[Retriever FAISS/Elasticsearch]
+        C --> D[Documents PDF/DOCX]
+        B --> E[LLM via HuggingFace]
         E --> F[Réponse augmentée]
     end
 
