@@ -37,15 +37,20 @@ class CrawlResult:
     stopped_gracefully: bool = True
 
 class TimeBoundCrawler:
-    """Crawler avec gestion du temps d'exécution et optimisations"""
+    """Crawler avec gestion du temps d'exécution et optimisations"""    
     def __init__(self, max_execution_minutes: int = 5):
-        self.max_execution_time = max_execution_minutes * 60  # Conversion en secondes
+        self.max_execution_time = max_execution_minutes * 60  
         self.start_time = time.time()
         self.should_stop = False
-        self.grace_period = 30  # 30 secondes de grâce pour finir proprement
+        self.grace_period = 30  
+
+        try:
+            self.base_dir = Path(__file__).parent.parent
+        except NameError:
+            self.base_dir = Path.cwd()
+            if self.base_dir.name != "agroRAG" and self.base_dir.name == "crawler":
+                self.base_dir = self.base_dir.parent
         
-        # Chemins des fichiers - utiliser des chemins absolus
-        self.base_dir = Path(__file__).parent.parent
         self.crawler_dir = self.base_dir / "crawler"
         self.data_dir = self.base_dir / "data"
         
@@ -120,7 +125,6 @@ class TimeBoundCrawler:
                     self.url_index = yaml.safe_load(f) or {}
             else:
                 self.url_index = {}
-              # Charger les URLs déjà explorées pour éviter les doublons
             self._load_already_explored_urls()
             
         except Exception as e:
@@ -150,7 +154,6 @@ class TimeBoundCrawler:
             with open(self.url_config_file, 'w', encoding='utf-8') as f:
                 yaml.dump(self.url_config, f, default_flow_style=False, allow_unicode=True)
             
-            # Sauvegarde index PDFs
             with open(self.pdf_index_file, 'w', encoding='utf-8') as f:
                 yaml.dump(self.pdf_index, f, default_flow_style=False, allow_unicode=True)
             # Sauvegarde index URLs
@@ -455,7 +458,6 @@ class TimeBoundCrawler:
             for doc_url in doc_links:
                 doc_hash = self._hash_url(doc_url)
                 if doc_hash not in self.pdf_index:
-                                        # Essayer de récupérer le titre du lien
                     doc_type = self._get_document_type(doc_url)
                     
                     # Extraire le nom du fichier depuis l'URL pour un titre par défaut
@@ -484,7 +486,7 @@ class TimeBoundCrawler:
                         'timestamp': int(time.time())
                     }
                     self.stats.documents_found += 1
-                    url_has_value = True  # Cette URL contient des documents utiles
+                    url_has_value = True  
                     logger.info(f"Document {doc_type} trouvé: {doc_title}")
               
             # SEULEMENT sauvegarder dans explored_urls.txt si l'URL a de la valeur
@@ -492,7 +494,6 @@ class TimeBoundCrawler:
             if url_has_value:
                 self._save_explored_url(url)
             else:
-                # Ne pas sauvegarder dans explored_urls.txt, mais marquer comme visitée en mémoire
                 self.visited_urls.add(url)
                 logger.debug(f"URL sans valeur non sauvegardée: {url}")
               
@@ -500,7 +501,7 @@ class TimeBoundCrawler:
             max_depth = self.url_config.get("crawl_config", {}).get("max_depth", 3)
             if depth <= max_depth:
                 page_links = [link for link in links if not self._is_document_link(link)]
-                for link in page_links:  # Limiter pour éviter l'explosion
+                for link in page_links:  
                     if link not in self.visited_urls:
                         self.discovered_urls.add(link)
                         self.url_queue.append((link, depth + 1))
@@ -511,10 +512,10 @@ class TimeBoundCrawler:
             
         except Exception as e:
             logger.warning(f"Erreur lors du crawl de {url}: {e}")
-    
     def run(self) -> CrawlResult:
         """Exécute le crawling avec contraintes temporelles"""
         logger.info("Démarrage du crawler avancé AgroRAG")
+        logger.info(f"Temps maximum d'exécution: {self.max_execution_time} secondes (sans limite d'URLs)")
         self.start_time = time.time()
         
         try:
@@ -523,30 +524,26 @@ class TimeBoundCrawler:
             
             # OPTIMISATION 1: Utiliser notre méthode pour filtrer les URLs déjà explorées
             urls_to_process = self._get_urls_to_process()
-                        
-            # Ajouter à la queue avec profondeur 0
             for url in urls_to_process:
                 if self._is_valid_url(url):
                     self.url_queue.append((url, 0))
             
-            max_urls = self.url_config.get("crawl_config", {}).get("max_urls_per_execution", 75)
             urls_processed = 0
-              # Boucle principale de crawling
-            while self.url_queue and not self.should_stop and urls_processed < max_urls:
+              # Boucle principale de crawling - limité uniquement par la contrainte de temps
+            while self.url_queue and not self.should_stop:
                 if self._check_time_limit():
                     break
                 
                 url, depth = self.url_queue.popleft()
                 
                 if url not in self.visited_urls:
-                    self._crawl_page(url, depth)
-                    # NOTE: _save_explored_url() est maintenant appelé SEULEMENT 
-                    # depuis _crawl_page() pour les URLs qui ont de la valeur
+                    self._crawl_page(url, depth)                    
                     urls_processed += 1
                     
                     # Log de progression
                     if urls_processed % 10 == 0:
                         elapsed = time.time() - self.start_time
+                        logger.info(f"Progression: {urls_processed} URLs traitées en {elapsed:.2f}s")
             
             # Sauvegarder les résultats
             self.save_configurations()
@@ -572,52 +569,54 @@ class TimeBoundCrawler:
             raise
         
         finally:
-            # Nettoyer et sauvegarder même en cas d'erreur
             try:
                 self.save_configurations()
             except Exception as e:
                 logger.error(f"Erreur lors de la sauvegarde finale: {e}")
 
-def main():
+def main(max_time=5, verbose=False):
     """Point d'entrée principal"""
-    import argparse
     
-    parser = argparse.ArgumentParser(description="Crawler avancé AgroRAG")
-    parser.add_argument(
-        "--max-time", 
-        type=int, 
-        default=5, 
-        help="Durée maximale d'exécution en minutes (défaut: 5)"
-    )
-    parser.add_argument(
-        "--verbose", 
-        action="store_true", 
-        help="Mode verbeux"
-    )
-    
-    args = parser.parse_args()
-    
-    if args.verbose:
+    if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     
-    # Créer et exécuter le crawler
-    crawler = TimeBoundCrawler(max_execution_minutes=args.max_time)
+    crawler = TimeBoundCrawler(max_execution_minutes=max_time)
     
     try:
         result = crawler.run()
-        if result.stopped_gracefully and (result.urls_indexed > 0 or result.documents_found > 0):
-            sys.exit(0)
-        elif result.stopped_gracefully:
-            sys.exit(1)
+        
+        # Résumé des résultats
+        print(f"\nRésultat du crawl :")
+        print(f"  - URLs indexées : {result.urls_indexed}")
+        print(f"  - Documents trouvés : {result.documents_found}")
+        print(f"  - Nouvelles URLs découvertes : {result.new_urls_discovered}")
+        print(f"  - Total URLs traitées : {result.total_urls_processed}")
+        print(f"  - Temps d'exécution : {result.execution_time:.2f}s")
+        print(f"  - Arrêt gracieux : {result.stopped_gracefully}")
+        
+        # Détecter si on est en mode interactif (notebook, VSCode Interactive, etc.)
+        if hasattr(sys, 'ps1') or sys.flags.interactive:
+            logger.info("Exécution en mode interactif - pas de sys.exit()")
+            return result
         else:
-            sys.exit(2)
-            
+            if result.stopped_gracefully and (result.urls_indexed > 0 or result.documents_found > 0):
+                sys.exit(0) 
+            elif result.stopped_gracefully:
+                sys.exit(1)
+            else:
+                sys.exit(2)
     except KeyboardInterrupt:
         logger.info("Arrêt demandé par l'utilisateur")
-        sys.exit(130)
+        if hasattr(sys, 'ps1') or sys.flags.interactive:
+            return None
+        else:
+            sys.exit(130)
     except Exception as e:
         logger.error(f"Erreur fatale: {e}")
-        sys.exit(3)
+        if hasattr(sys, 'ps1') or sys.flags.interactive:
+            raise
+        else:
+            sys.exit(3)
 
 if __name__ == "__main__":
-    main()
+    main(max_time=15, verbose=True)

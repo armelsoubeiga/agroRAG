@@ -93,7 +93,7 @@ scoring:
 quality_thresholds:
   minimum_word_count: 1000         # Nombre minimum de mots dans une page
   minimum_substantive_words: 500   # Nombre minimum de mots dans le contenu principal
-  minimum_text_ratio: 0.5        # Ratio minimum texte/HTML
+  minimum_text_ratio: 0.4        # Ratio minimum texte/HTML
 
 # Langues supportées
 supported_languages:
