@@ -1,0 +1,115 @@
+# Configuration des mots-clés et hashtags pour le crawling
+# Ce fichier définit les critères de pertinence pour l'indexation
+
+# Mots-clés principaux (haute priorité)
+primary_keywords:
+  - "agriculture"
+  - "burkina faso"
+  - "sahel"
+  - "irrigation"
+  - "sécurité alimentaire"
+  - "élevage"
+  - "culture"
+  - "semences"
+  - "fertilisant"
+  - "climat"
+  - "sécheresse"
+  - "productivité agricole"
+  - "coton"
+  - "mil"
+  - "sorgho"
+  - "maïs"
+  - "riz"
+  - "arachide"
+
+# Mots-clés secondaires (priorité moyenne)
+secondary_keywords:
+  - "agroécologie"
+  - "développement rural"
+  - "formation agricole"
+  - "vulgarisation"
+  - "mécanisation"
+  - "post-récolte"
+  - "commercialisation"
+  - "crédit agricole"
+  - "coopérative"
+  - "association paysanne"
+  - "genre en agriculture"
+  - "jeunesse rurale"
+  - "resilience"
+  - "adaptation"
+  - "mitigation"
+
+# Mots-clés techniques (priorité basse)
+technical_keywords:
+  - "système d'information"
+  - "météorologie"
+  - "télédétection"
+  - "GPS"
+  - "drone"
+  - "IoT"
+  - "precision agriculture"
+  - "big data"
+  - "intelligence artificielle"
+  - "machine learning"
+
+# Hashtags et termes de recherche spéciaux
+hashtags:
+  - "#agriculture"
+  - "#burkinafaso"
+  - "#sahel"
+  - "#climatechange"
+  - "#foodsecurity"
+  - "#irrigation"
+  - "#livestock"
+  - "#cotton"
+  - "#millet"
+  - "#sorghum"
+  - "#maize"
+  - "#rice"
+  - "#groundnut"
+
+# Expressions exactes à rechercher
+exact_phrases:
+  - "agriculture burkina faso"
+  - "sécurité alimentaire sahel"
+  - "irrigation burkina"
+  - "élevage burkina faso"
+  - "développement rural burkina"
+  - "changement climatique agriculture burkina faso"
+  - "adaptation agriculture burkina faso"
+  - "résilience agricole burkina faso"
+
+# Configuration de scoring
+scoring:
+  primary_keyword_weight: 10
+  secondary_keyword_weight: 5
+  technical_keyword_weight: 2
+  hashtag_weight: 3
+  exact_phrase_weight: 15
+  minimum_score_threshold: 8
+
+# Seuils de qualité du contenu
+quality_thresholds:
+  minimum_word_count: 1000         # Nombre minimum de mots dans une page
+  minimum_substantive_words: 500   # Nombre minimum de mots dans le contenu principal
+  minimum_text_ratio: 0.5        # Ratio minimum texte/HTML
+
+# Langues supportées
+supported_languages:
+  - "fr"  # Français
+  - "en"  # Anglais
+  - "ar"  # Arabe (pour certains documents régionaux)
+
+# Types de contenu à privilégier
+content_types:
+  - "rapport"
+  - "étude"
+  - "guide"
+  - "manuel"
+  - "recherche"
+  - "publication"
+  - "article"
+  - "document technique"
+  - "formation"
+  - "cours"

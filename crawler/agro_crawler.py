@@ -11,14 +11,14 @@ import logging
 
 # CONFIG
 START_URLS = [
-    "https://www.fao.org/aquastat/fr/countries-and-basins/country/BFA/",
-    "https://www.reca-niger.org/spip.php?article772",
-    "https://www.inera.bf",  # Vérifier la structure réelle de ce site
-    "https://fagri-burkina.com",
-    "https://cimmyt.org"  # global, filtrer le contenu pertinent
+    # "https://www.fao.org/aquastat/fr/countries-and-basins/country/BFA/",
+    # "https://www.reca-niger.org/spip.php?article772",
+    # "https://www.inera.bf",
+    # "https://cimmyt.org",
+    "https://fagri-burkina.com"
 ]
 ALLOWED_DOMAINS = ["fao.org", "reca-niger.org", "inera.bf", "fagri-burkina.com", "cimmyt.org"]
-INDEX_FILE = "indexed_documents.yaml"
+INDEX_FILE = "data/indexed_documents.yaml"
 MAX_DEPTH = 2
 USER_AGENT = "Mozilla/5.0 (compatible; AgroBot/1.0)"
 PDF_EXTENSIONS = [".pdf"]
@@ -62,10 +62,15 @@ def crawl_page(url, domain, visited, index, depth):
     soup = BeautifulSoup(response.text, "html.parser")
     for link in soup.find_all("a", href=True):
         href = link['href']
+        if href.startswith(("mailto:", "tel:", "javascript:")):
+            continue
         abs_url = urljoin(url, href)
         parsed = urlparse(abs_url)
+        if parsed.scheme not in ("http", "https"):
+            continue
         if parsed.netloc and parsed.netloc not in domain:
-            continue  # out of domain
+            continue 
+
 
         if is_pdf_link(abs_url):
             uid = hash_url(abs_url)
