@@ -1,5 +1,4 @@
-﻿
-<div align="center">
+﻿<div align="center">
   <!-- <img src="https://emojicdn.elk.sh/🌾?style=google" width="120" height="120"/> -->
   <img src="docs/logo.svg" width="120" height="120"/>
 </div>
@@ -24,9 +23,14 @@ graph LR
 
     subgraph Backend
         B --> C[Retriever FAISS/Elasticsearch]
-        C --> D[Documents PDF/DOCX]
+        C --> D[Pages Web/Documents .pdf, .docx]
         B --> E[LLM via HuggingFace]
         E --> F[Réponse augmentée]
+    end
+
+    subgraph "Crawler documentaire"
+        J[Crawler avancé] -- collecte, filtrage, scoring --> D
+        J -- indexation métadonnées --> C
     end
 
     subgraph Déploiement

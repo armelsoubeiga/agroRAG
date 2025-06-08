@@ -29,7 +29,7 @@ logger = logging.getLogger("agro_full_crawler")
 @dataclass
 class CrawlResult:
     """Structure pour stocker les résultats de crawling"""
-    documents_found: int = 0  # PDFs, DOCs, DOCX
+    documents_found: int = 0  
     urls_indexed: int = 0
     new_urls_discovered: int = 0
     total_urls_processed: int = 0
@@ -279,26 +279,50 @@ class TimeBoundCrawler:
         if (metrics['word_count'] >= min_word_count and 
             metrics['substantive_word_count'] >= min_substantive_count):
             metrics['has_meaningful_content'] = True
-            
-        # Score basé sur la quantité et qualité du contenu
+              # Score basé sur la quantité et qualité du contenu
         metrics['substantive_content_score'] = min(10, metrics['substantive_word_count'] // 20)
         
         return metrics
-    
+        
     def _is_document_link(self, url: str) -> bool:
-        """Vérifie si le lien pointe vers un document téléchargeable (PDF, DOC, DOCX)"""
+        """Vérifie si le lien pointe vers un document téléchargeable"""
         url_lower = url.lower()
-        return url_lower.endswith(('.pdf', '.doc', '.docx'))
-    
+        
+        # Obtenir les extensions de documents depuis la configuration
+        doc_extensions_list = self.corpus_config.get("document_filtering", {}).get("document_extensions", [])
+        
+        # Si aucune extension n'est définie dans la config, utiliser les valeurs par défaut
+        if not doc_extensions_list:
+            doc_extensions = ('.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.odt', '.ods', '.odp')
+        else:            # Convertir la liste en tuple pour l'utilisation avec endswith()
+            doc_extensions = tuple(doc_extensions_list)
+            
+        return url_lower.endswith(doc_extensions)
+        
     def _get_document_type(self, url: str) -> str:
         """Renvoie le type de document basé sur l'extension"""
         url_lower = url.lower()
-        if url_lower.endswith('.pdf'):
-            return "PDF"
-        elif url_lower.endswith('.doc'):
-            return "DOC"
-        elif url_lower.endswith('.docx'):
-            return "DOCX"
+        
+        # Mapping des extensions vers les types de documents
+        extension_mapping = {
+            '.pdf': "PDF",
+            '.doc': "DOC",
+            '.docx': "DOCX",
+            '.ppt': "PPT", 
+            '.pptx': "PPT",
+            '.xls': "XLS", 
+            '.xlsx': "XLS",
+            '.odt': "ODT",
+            '.ods': "ODS",
+            '.odp': "ODP"
+        }
+        
+        # Vérifier chaque extension dans le mapping
+        for ext, doc_type in extension_mapping.items():
+            if url_lower.endswith(ext):
+                return doc_type
+                
+        # Si aucune extension reconnue, retourner le type générique
         return "Document"
     
     def _calculate_content_score(self, text: str, title: str = "") -> int:
@@ -457,37 +481,110 @@ class TimeBoundCrawler:
             doc_links = [link for link in links if self._is_document_link(link)]
             for doc_url in doc_links:
                 doc_hash = self._hash_url(doc_url)
-                if doc_hash not in self.pdf_index:
-                    doc_type = self._get_document_type(doc_url)
+                if doc_hash not in self.pdf_index:                   
+                    is_relevant = False
+                    score_document = 0
                     
-                    # Extraire le nom du fichier depuis l'URL pour un titre par défaut
-                    filename = doc_url.split('/')[-1]
-                    try:
-                        filename = unquote(filename)
-                    except:
-                        pass
+                    # Charger les paramètres de filtrage depuis la configuration
+                    doc_filter_config = self.corpus_config.get("document_filtering", {})
+                    min_score_required = doc_filter_config.get("minimum_score_required", 15)
+                    keywords_found = []
                     
-                    # Titre par défaut = nom du fichier (au lieu de "Document PDF")
-                    doc_title = filename
-                      # Tenter de trouver un meilleur titre dans le texte du lien
+                    # Les poids pour différents critères (plus élevés = plus importants)
+                    url_weight = doc_filter_config.get("url_keyword_weight", 10)
+                    primary_kw_weight = doc_filter_config.get("primary_keyword_weight", 15)
+                    secondary_kw_weight = doc_filter_config.get("secondary_keyword_weight", 5)
+                    page_quality_weight = doc_filter_config.get("page_quality_weight", 12)
+                    exact_phrase_weight = doc_filter_config.get("exact_phrase_weight", 20)
+
+                    # 1. Filtrage par URL du document (plus strict: recherche de plusieurs mots-clés)
+                    for kw in self.corpus_config.get("primary_keywords", []):
+                        if kw.lower() in doc_url.lower():
+                            score_document += url_weight
+                            keywords_found.append(f"URL:{kw}")
+                    
+                    # 2. Vérification des expressions exactes dans l'URL
+                    for phrase in self.corpus_config.get("exact_phrases", []):
+                        if phrase.lower() in doc_url.lower():
+                            score_document += exact_phrase_weight
+                            keywords_found.append(f"URL-Exact:{phrase}")
+
+                    # 3. Filtrage par texte du lien (analyse complète, pas d'arrêt au premier mot-clé)
                     for link_elem in soup.find_all('a', href=True):
                         if link_elem.get('href', '').strip() and doc_url.endswith(link_elem.get('href', '').split('/')[-1]):
-                            link_text = link_elem.get_text(strip=True)
-                            if link_text and not link_text.startswith('Document '):
-                                doc_title = link_text
-                                break
+                            link_text = link_elem.get_text(strip=True).lower()
+                            
+                            # Vérifier les mots-clés principaux
+                            for kw in self.corpus_config.get("primary_keywords", []):
+                                if kw.lower() in link_text:
+                                    score_document += primary_kw_weight
+                                    keywords_found.append(f"Lien-P:{kw}")
+                            
+                            # Vérifier les mots-clés secondaires
+                            for kw in self.corpus_config.get("secondary_keywords", []):
+                                if kw.lower() in link_text:
+                                    score_document += secondary_kw_weight
+                                    keywords_found.append(f"Lien-S:{kw}")
+                            
+                            # Vérifier les expressions exactes (bonus plus important)
+                            for phrase in self.corpus_config.get("exact_phrases", []):
+                                if phrase.lower() in link_text:
+                                    score_document += exact_phrase_weight
+                                    keywords_found.append(f"Lien-Exact:{phrase}")
+                            
+                            break  
+
+                    # 4. Filtrage par pertinence de la page source (bonus conditionnel)
+                    if url_has_value:
+                        if score >= threshold * 1.5:  # La page est très pertinente (50% au-dessus du seuil)
+                            score_document += page_quality_weight
+                            keywords_found.append("Page_Qualité")
+                        elif score >= threshold:      # La page est pertinente mais pas exceptionnelle
+                            score_document += page_quality_weight // 2
+                            keywords_found.append("Page_Pertinente")
                     
-                    self.pdf_index[doc_hash] = {
-                        'url': doc_url,
-                        'title': doc_title,
-                        'type': doc_type,
-                        'source': urlparse(url).netloc,
-                        'found_at': url,
-                        'timestamp': int(time.time())
-                    }
-                    self.stats.documents_found += 1
-                    url_has_value = True  
-                    logger.info(f"Document {doc_type} trouvé: {doc_title}")
+                    # Décision finale basée sur le score total
+                    if score_document >= min_score_required:
+                        is_relevant = True
+                        logger.info(f"Document pertinent (score: {score_document}): {doc_url} - mots-clés: {', '.join(keywords_found)}")
+                    else:
+                        logger.debug(f"Document ignoré (score insuffisant: {score_document}/{min_score_required}): {doc_url} - mots-clés: {', '.join(keywords_found)}")
+
+                    if is_relevant:
+                        # Traitement du document comme auparavant
+                        doc_type = self._get_document_type(doc_url)
+                        
+                        # Extraire le nom du fichier depuis l'URL pour un titre par défaut
+                        filename = doc_url.split('/')[-1]
+                        try:
+                            filename = unquote(filename)
+                        except:
+                            pass
+                        
+                        # Titre par défaut = nom du fichier
+                        doc_title = filename
+                        
+                        # Tenter de trouver un meilleur titre dans le texte du lien
+                        for link_elem in soup.find_all('a', href=True):
+                            if link_elem.get('href', '').strip() and doc_url.endswith(link_elem.get('href', '').split('/')[-1]):
+                                link_text = link_elem.get_text(strip=True)
+                                if link_text and not link_text.startswith('Document '):
+                                    doc_title = link_text
+                                    break
+                        
+                        self.pdf_index[doc_hash] = {
+                            'url': doc_url,
+                            'title': doc_title,
+                            'type': doc_type,
+                            'source': urlparse(url).netloc,
+                            'found_at': url,
+                            'timestamp': int(time.time())
+                        }
+                        self.stats.documents_found += 1
+                        url_has_value = True  
+                        logger.info(f"Document {doc_type} pertinent trouvé: {doc_title}")
+                    else:
+                        logger.debug(f"Document ignoré (non pertinent): {doc_url}")
               
             # SEULEMENT sauvegarder dans explored_urls.txt si l'URL a de la valeur
             # (soit indexée, soit contenant des documents)

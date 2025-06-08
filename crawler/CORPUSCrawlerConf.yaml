@@ -80,7 +80,7 @@ exact_phrases:
   - "adaptation agriculture burkina faso"
   - "résilience agricole burkina faso"
 
-# Configuration de scoring
+# Configuration de scoring pour les pages web
 scoring:
   primary_keyword_weight: 10
   secondary_keyword_weight: 5
@@ -88,6 +88,28 @@ scoring:
   hashtag_weight: 3
   exact_phrase_weight: 15
   minimum_score_threshold: 8
+
+# Configuration de scoring pour les documents
+document_filtering:
+  minimum_score_required: 15
+  url_keyword_weight: 10      
+  primary_keyword_weight: 15  
+  secondary_keyword_weight: 5 
+  page_quality_weight: 12     
+  exact_phrase_weight: 20    
+  
+  # Types de documents acceptés (extensions)
+  document_extensions:
+    - ".pdf"
+    - ".doc"
+    - ".docx"
+    - ".ppt"
+    - ".pptx"
+    - ".xls"
+    - ".xlsx"
+    - ".odt"
+    - ".ods"
+    - ".odp"
 
 # Seuils de qualité du contenu
 quality_thresholds:
