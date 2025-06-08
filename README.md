@@ -29,8 +29,8 @@ graph LR
     end
 
     subgraph "Crawler documentaire"
-        J[Crawler avancé] -- collecte, filtrage, scoring --> D
-        J -- indexation métadonnées --> C
+        J[Crawler avancé] -- deepsearch, indexation métadonnées --> K[Scraping]
+        K -- collecte, filtrage, scoring --> C & D
     end
 
     subgraph Déploiement
