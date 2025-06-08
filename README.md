@@ -23,14 +23,14 @@ graph LR
 
     subgraph Backend
         B --> C[Retriever FAISS/Elasticsearch]
-        C --> D[Pages Web/Documents .pdf, .docx]
+        D[Pages Web/Documents .pdf, .docx] --> C
         B --> E[LLM via HuggingFace]
         E --> F[Réponse augmentée]
     end
 
     subgraph "Crawler documentaire"
         J[Crawler avancé] -- deepsearch, indexation métadonnées --> K[Scraping]
-        K -- collecte, filtrage, scoring --> C & D
+        K -- collecte, filtrage, scoring --> D
     end
 
     subgraph Déploiement
