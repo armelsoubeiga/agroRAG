@@ -121,7 +121,7 @@ quality_thresholds:
 supported_languages:
   - "fr"  # Français
   - "en"  # Anglais
-  - "ar"  # Arabe (pour certains documents régionaux)
+
 
 # Types de contenu à privilégier
 content_types:
